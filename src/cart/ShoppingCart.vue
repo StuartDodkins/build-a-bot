@@ -15,11 +15,15 @@
       <tbody>
         <tr v-for="(robot, index) in cartStore.cart" :key="index">
           <td class="robot-title">
-            <img :src="robot.head.imageUrl" /> {{ robot.head.title }}
+            <img :src="robot.head.imageUrl" alt="head" /> {{ robot.head.title }}
           </td>
           <td class="cost">
             {{ toCurrency(robot.cost) }}
           </td>
+        </tr>
+        <tr class="total">
+          <td>Total</td>
+          <td>{{ toCurrency(cartStore.cartTotal) }}</td>
         </tr>
       </tbody>
     </table>
@@ -37,6 +41,7 @@ const cartStore = useCartStore();
 .content {
   font-size: 22px;
 }
+
 td,
 th {
   padding: 5px;
@@ -51,6 +56,7 @@ th {
   width: 50px;
   vertical-align: middle;
 }
+
 .cost {
   text-align: right;
 }

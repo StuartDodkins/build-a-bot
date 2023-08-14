@@ -1,26 +1,12 @@
+<!-- eslint-disable vuejs-accessibility/alt-text -->
+<!-- eslint-disable max-len -->
 <template>
   <div class="content" v-if="partsStore.parts">
-    <div class="top-row">
-      <!-- <div class="robot-name">
-        {{ selectedRobot.head.title }}
-        <span class="sale" v-if="selectedRobot.head.onSale">Sale!</span>
-      </div> -->
-      <PartSelector :parts="partsStore.parts.heads" @partSelected="part => selectedRobot.head = part" position="top" />
-    </div>
-    <div class="middle-row">
-      <PartSelector :parts="partsStore.parts.arms" @partSelected="part => selectedRobot.leftArm = part" position="left" />
-      <PartSelector :parts="partsStore.parts.torsos" @partSelected="part => selectedRobot.torso = part"
-        position="center" />
-      <PartSelector :parts="partsStore.parts.arms" @partSelected="part => selectedRobot.rightArm = part"
-        position="right" />
-    </div>
-    <div class="bottom-row">
-      <PartSelector :parts="partsStore.parts.bases" @partSelected="part => selectedRobot.base = part" position="bottom" />
-    </div>
+
     <div class="preview">
       <CollapsibleSection>
         <template v-slot:collapse>&#x25B2; Hide</template>
-        <template v-slot:expand>&#x25BC; Show</template>
+        <template v-slot:expand>&#x25BC; Expand</template>
         <div class="preview-content">
           <div class="top-row">
             <img :src="selectedRobot.head.imageUrl" />
@@ -34,77 +20,77 @@
             <img :src="selectedRobot.base.imageUrl" />
           </div>
         </div>
+        <button class="add-to-cart" @click="addToCart()">
+          Add to Cart
+        </button>
       </CollapsibleSection>
-      <button class="add-to-cart" @click="addToCart()">Add to Cart</button>
+    </div>
+
+    <div class="top-row">
+      <div class="robot-name">
+        {{ selectedRobot.head.title }}
+        <span v-if="selectedRobot.head.onSale" class="sale">
+          Sale!
+        </span>
+      </div>
+      <PartSelector :parts="partsStore.parts.heads" position="top" @partsSelected="part => selectedRobot.head = part" />
+    </div>
+    <div class="middle-row">
+      <PartSelector :parts="partsStore.parts.arms" position="left"
+        @partsSelected="part => selectedRobot.leftArm = part" />
+      <PartSelector :parts="partsStore.parts.torsos" position="center"
+        @partsSelected="part => selectedRobot.torso = part" />
+      <PartSelector :parts="partsStore.parts.arms" position="right"
+        @partsSelected="part => selectedRobot.rightArm = part" />
+    </div>
+    <div class="bottom-row">
+      <PartSelector :parts="partsStore.parts.bases" position="bottom"
+        @partsSelected="part => selectedRobot.base = part" />
     </div>
   </div>
 </template>
 
-<script>
-import { mapStores } from 'pinia';
-
+<script setup>
+import { computed, onMounted, ref } from 'vue';
+import CollapsibleSection from '@/shared/CollapsibleSection.vue';
+// import availableParts from '../data/parts';
 import PartSelector from './PartSelector.vue';
-import CollapsibleSection from '../shared/CollapsibleSection.vue';
-import { useCartStore } from '../stores/cartStoreOptions';
-import { usePartsStore } from '../stores/partsStoreOptions';
+import { useCartStore } from '../stores/cartStore';
+import { usePartsStore } from '../stores/partStore';
 
-export default {
-  components: { PartSelector, CollapsibleSection },
-  mounted() { console.log('onMounted executed.'); },
-  created() { this.partsStore.getParts(); },
-  data() {
-    return {
-      selectedRobot: {
-        head: {},
-        leftArm: {},
-        torso: {},
-        rightArm: {},
-        base: {},
-      },
-    };
-  },
-  computed: {
-    ...mapStores(useCartStore, usePartsStore),
-    headBorderColor() { return this.selectedRobot.head.onSale ? 'red' : '#aaa'; },
-  },
-  methods: {
-    addToCart() {
-      const robot = this.selectedRobot;
-      const cost = robot.head.cost +
-        robot.leftArm.cost +
-        robot.torso.cost +
-        robot.rightArm.cost +
-        robot.base.cost;
-      this.cartStore.cart.push({ ...robot, cost });
-    },
-  },
+const cartStore = useCartStore();
+const partsStore = usePartsStore();
+partsStore.getParts();
+
+onMounted(() => {
+  console.log('onMounted Executed');
+});
+
+const selectedRobot = ref({
+  head: {},
+  leftArm: {},
+  torso: {},
+  rightArm: {},
+  base: {},
+});
+
+const headBorderColor = computed(() => (selectedRobot.value.head.onSale ? 'red' : '#aaa'));
+
+const addToCart = () => {
+  const robot = selectedRobot.value;
+  console.log(cartStore.cart);
+
+  const cost = robot.head.cost +
+    robot.leftArm.cost +
+    robot.torso.cost +
+    robot.rightArm.cost +
+    robot.base.cost;
+  cartStore.cart.push({ ...robot, cost });
 };
+
 </script>
 
-<style lang="scss" scoped>
-.content {
-  position: relative;
-}
-
-.add-to-cart {
-  position: absolute;
-  width: 310px;
-  padding: 5px;
-  font-size: 24px;
-  cursor: pointer;
-}
-
-.robot-name {
-  position: absolute;
-  top: -25px;
-  text-align: center;
-  width: 100%;
-}
-
-.sale {
-  color: red;
-}
-
+<style lang="scss" scoped >
 .part {
   position: relative;
   width: 200px;
@@ -219,15 +205,19 @@ export default {
   right: -3px;
 }
 
-td,
-th {
-  text-align: left;
-  padding: 5px;
-  padding-right: 20px;
+.robot-name {
+  position: absolute;
+  top: -25px;
+  text-align: center;
+  width: 100%;
 }
 
-.cost {
-  text-align: right;
+.sale {
+  color: red;
+}
+
+.content {
+  position: relative;
 }
 
 .preview {
@@ -241,7 +231,6 @@ th {
 
 .preview-content {
   border: 1px solid #999;
-  padding: 10px;
 }
 
 .preview img {
@@ -255,5 +244,23 @@ th {
 
 .rotate-left {
   transform: rotate(-90deg);
+}
+
+.add-to-cart {
+  position: absolute;
+  width: 310px;
+  padding: 3px;
+  font-size: 16px
+}
+
+td,
+th {
+  text-align: left;
+  padding: 5px;
+  padding-right: 20px;
+}
+
+.cost {
+  text-align: right;
 }
 </style>
